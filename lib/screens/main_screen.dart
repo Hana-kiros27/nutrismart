@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/app_provider.dart';
 import 'dashboard_screen.dart';
 import 'meal_plan_screen.dart';
@@ -27,41 +28,151 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Optional: read provider here if you want to use provider.accentColor for your navigation seed
     final provider = Provider.of<AppProvider>(context);
 
     return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        height: 70,
-        selectedIndex: _currentIndex,
-        // Tint the navigation bar according to user color choices dynamically
-        indicatorColor: provider.accentColor.withOpacity(0.2),
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
+      backgroundColor: const Color(0xFFF5F7FA),
+
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
         },
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+
+        child: Container(
+          key: ValueKey(_currentIndex),
+          child: _screens[_currentIndex],
+        ),
+      ),
+
+      // FLOATING MODERN NAVIGATION BAR
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.restaurant_menu_rounded),
-            label: 'Plan',
+
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+
+            child: NavigationBar(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+
+              height: 78,
+
+              selectedIndex: _currentIndex,
+
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+
+              indicatorColor: provider.accentColor.withOpacity(0.15),
+
+              animationDuration: const Duration(milliseconds: 500),
+
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+
+              destinations: [
+                // HOME
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined, color: Colors.grey.shade600),
+
+                  selectedIcon: Icon(
+                    Icons.home_rounded,
+                    color: provider.accentColor,
+                  ),
+
+                  label: 'Home',
+                ),
+
+                // PLAN
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.restaurant_menu_outlined,
+                    color: Colors.grey.shade600,
+                  ),
+
+                  selectedIcon: Icon(
+                    Icons.restaurant_menu_rounded,
+                    color: provider.accentColor,
+                  ),
+
+                  label: 'Plan',
+                ),
+
+                // CENTER ADD BUTTON
+                NavigationDestination(
+                  icon: Container(
+                    padding: const EdgeInsets.all(12),
+
+                    decoration: BoxDecoration(
+                      color: provider.accentColor,
+                      shape: BoxShape.circle,
+
+                      boxShadow: [
+                        BoxShadow(
+                          color: provider.accentColor.withOpacity(0.35),
+
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+
+                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                  ),
+
+                  label: 'Log',
+                ),
+
+                // PROGRESS
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.trending_up_outlined,
+                    color: Colors.grey.shade600,
+                  ),
+
+                  selectedIcon: Icon(
+                    Icons.trending_up_rounded,
+                    color: provider.accentColor,
+                  ),
+
+                  label: 'Progress',
+                ),
+
+                // SETTINGS
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.settings_outlined,
+                    color: Colors.grey.shade600,
+                  ),
+
+                  selectedIcon: Icon(
+                    Icons.settings_rounded,
+                    color: provider.accentColor,
+                  ),
+
+                  label: 'More',
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_rounded, size: 36, color: provider.accentColor),
-            label: 'Log',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.trending_up_rounded),
-            label: 'Progress',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.settings_rounded),
-            label: 'More',
-          ),
-        ],
+        ),
       ),
     );
   }

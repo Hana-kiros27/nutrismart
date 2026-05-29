@@ -13,19 +13,23 @@ class _LandingScreenState extends State<LandingScreen> {
 
   // Your signature premium green brand colors
   final Color brandGreen = const Color(0xFF1E8234);
-  final Color brandGreenLight = const Color(0xFFE8F3EA); // Soft tint fallback background
+  final Color brandGreenLight = const Color(
+    0xFFE8F3EA,
+  ); // Soft tint fallback background
 
   final List<Map<String, String>> _onboardingData = [
     {
       "title": "Optimize your well-being\nthrough balanced nutrition",
-      "subtitle": "Personalized cellular health, automated wellness recipes, and weekly groceries optimized for peak vitality.",
-      "image": "assets/nutrition_plate.jpg" 
+      "subtitle":
+          "Personalized cellular health, automated wellness recipes, and weekly groceries optimized for peak vitality.",
+      "image": "assets/nutrition_plate.jpg",
     },
     {
       "title": "Track your personalized\nutritional supplements",
-      "subtitle": "Manage your vital supplement routine and track your clean-eating meal plan delivery in real-time.",
-      "image": "assets/smart_plate.jpg" 
-    }
+      "subtitle":
+          "Manage your vital supplement routine and track your clean-eating meal plan delivery in real-time.",
+      "image": "assets/smart_plate.jpg",
+    },
   ];
 
   @override
@@ -59,7 +63,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 ),
               ],
             ),
-            
+
             // Sliding Carousel Section
             Expanded(
               child: PageView.builder(
@@ -82,7 +86,9 @@ class _LandingScreenState extends State<LandingScreen> {
                           ),
                           child: IntrinsicHeight(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32.0,
+                              ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -93,7 +99,10 @@ class _LandingScreenState extends State<LandingScreen> {
                                     height: 260,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 4),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 4,
+                                      ),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.04),
@@ -107,16 +116,17 @@ class _LandingScreenState extends State<LandingScreen> {
                                       child: Image.asset(
                                         _onboardingData[index]["image"]!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: brandGreenLight,
-                                            child: Icon(
-                                              Icons.spa_rounded, 
-                                              size: 90, 
-                                              color: brandGreen,
-                                            ),
-                                          );
-                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                color: brandGreenLight,
+                                                child: Icon(
+                                                  Icons.spa_rounded,
+                                                  size: 90,
+                                                  color: brandGreen,
+                                                ),
+                                              );
+                                            },
                                       ),
                                     ),
                                   ),
@@ -175,14 +185,17 @@ class _LandingScreenState extends State<LandingScreen> {
                         width: _currentPage == index ? 20 : 7,
                         height: 7,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? brandGreen : Colors.grey.shade300,
+                          color: _currentPage == index
+                              ? brandGreen
+                              : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28), // Optimized slightly smaller space
-                  
+                  const SizedBox(
+                    height: 28,
+                  ), // Optimized slightly smaller space
                   // Primary Interaction Action Button (Pill Design)
                   Container(
                     decoration: BoxDecoration(
@@ -191,7 +204,7 @@ class _LandingScreenState extends State<LandingScreen> {
                           color: brandGreen.withOpacity(0.15),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
-                        )
+                        ),
                       ],
                     ),
                     child: ElevatedButton(
@@ -215,13 +228,19 @@ class _LandingScreenState extends State<LandingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == _onboardingData.length - 1 ? "Get Started" : "Continue",
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.1),
+                        _currentPage == _onboardingData.length - 1
+                            ? "Get Started"
+                            : "Continue",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.1,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 14),
-                  
+
                   // Clean Secondary Action Pill Frame
                   ElevatedButton(
                     onPressed: () {

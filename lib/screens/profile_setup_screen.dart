@@ -13,21 +13,26 @@ class ProfileSetupScreen extends StatefulWidget {
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
 
   String gender = "Male";
-  int age = 22; 
-  double height = 170.0;
-  double weight = 65.0;
-  double targetWeight = 60.0; 
-  
+  int age = 22;
+  double height = 170;
+  double weight = 65;
+  double targetWeight = 60;
+
   String activityLevel = "Moderate";
-  String goal = "weight_loss"; 
+  String goal = "weight_loss";
 
   final Color brandGreen = const Color(0xFF1E8234);
 
   final List<String> activityLevels = [
-    "Sedentary", "Light", "Moderate", "Active", "Very Active"
+    "Sedentary",
+    "Light",
+    "Moderate",
+    "Active",
+    "Very Active",
   ];
 
   final Map<String, String> goalOptions = {
@@ -36,254 +41,337 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     "weight_gain": "Weight Gain",
   };
 
-  // --- SUBMISSION DISPATCH LOOP ---
+  Future<void> _handleFinishSetup(AppProvider provider) async {
+    if (!_formKey.currentState!.validate()) return;
 
-  void _handleFinishSetup(AppProvider provider) async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-      try {
-        // 1. Fetch the authentic current logged-in user UID from Firebase Auth
-        final User? currentUser = FirebaseAuth.instance.currentUser;
-        
-        if (currentUser == null) {
-          throw Exception("No authorized session detected.");
-        }
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
 
-        final String uid = currentUser.uid;
-        final double calculatedTarget = goal == "maintenance" ? weight : targetWeight;
+      if (currentUser == null) {
+        throw Exception("No user session");
+      }
 
-        // 2. Perform a network update operation on the pre-existing user_profiles document path
-        await FirebaseFirestore.instance
-            .collection('user_profiles')
-            .doc(uid)
-            .update({
-          'age': age,
-          'height': height,
-          'weight': weight,
-          'gender': gender,
-          'activity_level': activityLevel,
-          'goal': goal,
-          'target_weight': calculatedTarget,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+      final uid = currentUser.uid;
 
-        // 3. Sync memory data states inside AppProvider to run your rule matrix
-        await provider.loadUserDataAndProfiles(uid);
-        provider.generateRandomPlan();
+      final double calculatedTarget = goal == "maintenance"
+          ? weight
+          : targetWeight;
 
-        if (mounted) {
-          setState(() => _isLoading = false);
-          
-          // Clear routing stack straight to success configuration milestone layout
-          Navigator.pushReplacementNamed(context, '/congra');
+      await FirebaseFirestore.instance
+          .collection('user_profiles')
+          .doc(uid)
+          .update({
+            'age': age,
+            'height': height,
+            'weight': weight,
+            'gender': gender,
+            'activity_level': activityLevel,
+            'goal': goal,
+            'target_weight': calculatedTarget,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Profile setup complete! Daily Goal: ${provider.dailyCaloriesGoal} kcal"),
-              backgroundColor: brandGreen,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } catch (e) {
+      await provider.loadUserDataAndProfiles(uid);
+
+      provider.generateRandomPlan();
+
+      if (mounted) {
         setState(() => _isLoading = false);
+
+        Navigator.pushReplacementNamed(context, '/congra');
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to update health metrics. Check your internet connection."),
-            backgroundColor: Colors.redAccent,
+          SnackBar(
+            content: Text(
+              "Profile completed • ${provider.dailyCaloriesGoal} kcal daily target",
+            ),
+            backgroundColor: brandGreen,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
+    } catch (e) {
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to save profile. Please try again."),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
-
-  // --- VIEW INTERFACE COMPILER ---
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AppProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Complete Your Profile", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: const Color(0xFFF5F7FA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Welcome, ${provider.userName}! 👋",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: brandGreen),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Let's personalize your metabolic vitality parameters to optimize your meal mapping schedules.",
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-                const SizedBox(height: 32),
-
-                // Gender Form Block Segment
-                const Text("Gender", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildGenderOption("Male", Icons.male),
-                    const SizedBox(width: 16),
-                    _buildGenderOption("Female", Icons.female),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Age Input Row Form Element
-                _buildNumberField(
-                  label: "Age (years)",
-                  placeholderValue: age,
-                  onChanged: (val) => setState(() => age = val),
-                ),
-                const SizedBox(height: 24),
-
-                // Physical Scale Space Dimension Inputs Row Configuration
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildNumberField(
-                        label: "Height (cm)",
-                        placeholderValue: height.toInt(),
-                        onChanged: (val) => setState(() => height = val.toDouble()),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildNumberField(
-                        label: "Weight (kg)",
-                        placeholderValue: weight.toInt(),
-                        onChanged: (val) => setState(() => weight = val.toDouble()),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Activity Index Menu Dropdown Selection Component Row
-                const Text("Activity Level", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: activityLevel,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: brandGreen, width: 2), borderRadius: BorderRadius.circular(12)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                  items: activityLevels.map((level) {
-                    return DropdownMenuItem(value: level, child: Text(level));
-                  }).toList(),
-                  onChanged: (value) => setState(() => activityLevel = value!),
-                ),
-                const SizedBox(height: 24),
-
-                // Target Fitness Objective Primary Categorization Component List
-                const Text("Fitness Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: goal,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: brandGreen, width: 2), borderRadius: BorderRadius.circular(12)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                  items: goalOptions.entries.map((entry) {
-                    return DropdownMenuItem<String>(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      goal = value!;
-                      if (goal == "maintenance") {
-                        targetWeight = weight;
-                      }
-                    });
-                  },
-                ),
-                
-                // Adaptive Dynamic Weight Goal Targets Selector Field Element
-                if (goal != "maintenance") ...[
-                  const SizedBox(height: 24),
-                  _buildNumberField(
-                    label: "Target Goal Weight (kg)",
-                    placeholderValue: targetWeight.toInt(),
-                    onChanged: (val) => setState(() => targetWeight = val.toDouble()),
-                  ),
-                ],
-
-                const SizedBox(height: 40),
-
-                // Final Operational Action Transaction Submission Control Row
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandGreen,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    onPressed: _isLoading ? null : () => _handleFinishSetup(provider),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text("Finish Setup & Start", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- COMPONENT LEVEL METRIC SUBSYSTEM WIDGET HELPERS ---
-
-  Widget _buildGenderOption(String text, IconData icon) {
-    bool isSelected = gender == text;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => gender = text),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? brandGreen.withOpacity(0.08) : Colors.grey[50],
-            border: Border.all(color: isSelected ? brandGreen : Colors.grey.shade300, width: 2),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? brandGreen : Colors.grey, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                text, 
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? brandGreen : Colors.black54,
+              // ================= HEADER =================
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [brandGreen, brandGreen.withOpacity(0.85)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(32),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: brandGreen.withOpacity(0.25),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            Icons.person_outline_rounded,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Welcome ${provider.userName} 👋",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                "Set up your health profile to generate personalized meal plans and nutrition tracking.",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 26),
+
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildTopStat("Goal", goalOptions[goal] ?? ""),
+                          _buildDivider(),
+                          _buildTopStat("Weight", "${weight.toInt()} kg"),
+                          _buildDivider(),
+                          _buildTopStat("Activity", activityLevel),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ================= FORM =================
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildSectionCard(
+                        title: "Personal Information",
+                        icon: Icons.badge_outlined,
+                        child: Column(
+                          children: [
+                            _buildGenderSelector(),
+
+                            const SizedBox(height: 20),
+
+                            _buildNumberField(
+                              label: "Age",
+                              suffix: "years",
+                              initialValue: age.toString(),
+                              onChanged: (val) {
+                                age = int.tryParse(val) ?? age;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      _buildSectionCard(
+                        title: "Body Measurements",
+                        icon: Icons.monitor_weight_outlined,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildNumberField(
+                                label: "Height",
+                                suffix: "cm",
+                                initialValue: height.toInt().toString(),
+                                onChanged: (val) {
+                                  height = double.tryParse(val) ?? height;
+                                },
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            Expanded(
+                              child: _buildNumberField(
+                                label: "Weight",
+                                suffix: "kg",
+                                initialValue: weight.toInt().toString(),
+                                onChanged: (val) {
+                                  weight = double.tryParse(val) ?? weight;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      _buildSectionCard(
+                        title: "Lifestyle",
+                        icon: Icons.local_fire_department_outlined,
+                        child: Column(
+                          children: [
+                            _buildDropdown(
+                              label: "Activity Level",
+                              value: activityLevel,
+                              items: activityLevels,
+                              onChanged: (val) {
+                                setState(() {
+                                  activityLevel = val!;
+                                });
+                              },
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            _buildDropdown(
+                              label: "Fitness Goal",
+                              value: goal,
+                              items: goalOptions.keys.toList(),
+                              customLabels: goalOptions,
+                              onChanged: (val) {
+                                setState(() {
+                                  goal = val!;
+
+                                  if (goal == "maintenance") {
+                                    targetWeight = weight;
+                                  }
+                                });
+                              },
+                            ),
+
+                            if (goal != "maintenance") ...[
+                              const SizedBox(height: 18),
+
+                              _buildNumberField(
+                                label: "Target Weight",
+                                suffix: "kg",
+                                initialValue: targetWeight.toInt().toString(),
+                                onChanged: (val) {
+                                  targetWeight =
+                                      double.tryParse(val) ?? targetWeight;
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 58,
+                        child: ElevatedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => _handleFinishSetup(provider),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: brandGreen,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.check_circle_outline),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      "Finish Setup",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -293,41 +381,242 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
+  // ================= TOP HEADER STATS =================
+
+  Widget _buildTopStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 30,
+      color: Colors.white.withOpacity(0.2),
+    );
+  }
+
+  // ================= SECTION CARD =================
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: brandGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: brandGreen, size: 20),
+              ),
+
+              const SizedBox(width: 12),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          child,
+        ],
+      ),
+    );
+  }
+
+  // ================= GENDER SELECTOR =================
+
+  Widget _buildGenderSelector() {
+    return Row(
+      children: [
+        Expanded(child: _buildGenderOption("Male", Icons.male_rounded)),
+
+        const SizedBox(width: 14),
+
+        Expanded(child: _buildGenderOption("Female", Icons.female_rounded)),
+      ],
+    );
+  }
+
+  Widget _buildGenderOption(String text, IconData icon) {
+    final bool isSelected = gender == text;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          gender = text;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: isSelected ? brandGreen.withOpacity(0.1) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? brandGreen : Colors.grey.shade300,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 34, color: isSelected ? brandGreen : Colors.grey),
+
+            const SizedBox(height: 10),
+
+            Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? brandGreen : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ================= NUMBER FIELD =================
+
   Widget _buildNumberField({
     required String label,
-    required int placeholderValue,
-    required Function(int) onChanged,
+    required String suffix,
+    required String initialValue,
+    required Function(String) onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+
+        const SizedBox(height: 10),
+
         TextFormField(
-          key: ValueKey(label), 
+          initialValue: initialValue,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(fontSize: 16),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return "Please provide a valid metric measure entry.";
+              return "Required";
             }
+
             if (double.tryParse(value) == null) {
-              return "Numeric characters only.";
+              return "Invalid number";
             }
+
             return null;
           },
+          onChanged: onChanged,
           decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: brandGreen, width: 2), borderRadius: BorderRadius.circular(12)),
-            hintText: "Current value: $placeholderValue",
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.normal),
+            suffixText: suffix,
+            filled: true,
+            fillColor: const Color(0xFFF7F8FA),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: brandGreen, width: 2),
+            ),
           ),
-          onChanged: (val) {
-            if (val.isNotEmpty) {
-              final parsed = int.tryParse(val);
-              if (parsed != null) onChanged(parsed);
-            }
-          },
+        ),
+      ],
+    );
+  }
+
+  // ================= DROPDOWN =================
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    Map<String, String>? customLabels,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+
+        const SizedBox(height: 10),
+
+        DropdownButtonFormField<String>(
+          value: value,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF7F8FA),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: brandGreen, width: 2),
+            ),
+          ),
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(customLabels?[item] ?? item),
+            );
+          }).toList(),
         ),
       ],
     );
