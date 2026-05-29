@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "281591271361",
+    "project_id": "nutrismart-90204",
+    "storage_bucket": "nutrismart-90204.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:281591271361:android:1b9ef664946d5947832940",
+        "android_client_info": {
+          "package_name": "com.example.nutrismart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "281591271361-10e2otrh0mc2dlnruh1nb0k1r6ra7mr1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAad4-MO9uq4WM2N83HmA-TeD83uRw-ptk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "281591271361-10e2otrh0mc2dlnruh1nb0k1r6ra7mr1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
