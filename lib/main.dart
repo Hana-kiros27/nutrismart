@@ -9,7 +9,7 @@ import 'screens/register_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/congra_screen.dart'; 
-import 'food_data.dart'; // Imports your organized list of 20 categorized items
+import 'food_data.dart'; 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
